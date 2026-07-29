@@ -1,19 +1,18 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/shared/infrastructure/session-provider";
+import { productService } from "@/modules/product";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function ProductsPage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
 
-  const products = await prisma.product.findMany({
-    where: { userId: session.user.id, active: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const result = await productService.getAll(user.id);
+  const products = result.success ? result.value! : [];
 
   return (
     <div className="space-y-6">
@@ -44,11 +43,13 @@ export default async function ProductsPage() {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {p.name}
-                    {p.stock <= p.minStock && <TriangleAlert className="h-4 w-4 text-amber-500" />}
+                    {p.isLowStock() && <TriangleAlert className="h-4 w-4 text-amber-500" />}
                   </div>
                 </TableCell>
                 <TableCell>{p.sku || "—"}</TableCell>
-                <TableCell className={p.stock <= p.minStock ? "text-amber-600 font-semibold" : ""}>{p.stock}</TableCell>
+                <TableCell className={p.isLowStock() ? "text-amber-600 font-semibold" : ""}>
+                  {p.stock}
+                </TableCell>
                 <TableCell>{p.minStock}</TableCell>
                 <TableCell>${p.salePrice.toFixed(2)}</TableCell>
                 <TableCell>{p.category || "—"}</TableCell>

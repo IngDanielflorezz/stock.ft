@@ -1,17 +1,14 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/shared/infrastructure/session-provider";
+import { movementService } from "@/modules/movement";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default async function MovementsPage() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
 
-  const movements = await prisma.movement.findMany({
-    where: { userId: session.user.id },
-    include: { product: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const result = await movementService.getAll(user.id);
+  const movements = result.success ? result.value! : [];
 
   return (
     <div className="space-y-6">
@@ -33,9 +30,11 @@ export default async function MovementsPage() {
           <TableBody>
             {movements.map((m) => (
               <TableRow key={m.id}>
-                <TableCell>{m.createdAt.toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(m.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <span className={m.type === "in" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                  <span className={
+                    m.type === "in" ? "text-green-600 font-medium" : "text-red-600 font-medium"
+                  }>
                     {m.type === "in" ? "Entrada" : "Salida"}
                   </span>
                 </TableCell>
