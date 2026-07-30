@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/infrastructure/prisma";
+import type { Product as PrismaProduct } from "@prisma/client";
 import { IProductRepository } from "../domain/product.repository.interface";
 import { Product } from "../domain/product.entity";
 
@@ -8,7 +9,7 @@ export class PrismaProductRepository implements IProductRepository {
       where: { userId, active: true },
       orderBy: { createdAt: "desc" },
     });
-    return products.map((p) => Product.create(p));
+    return products.map((p: PrismaProduct) => Product.create(p));
   }
 
   async findById(id: string): Promise<Product | null> {
