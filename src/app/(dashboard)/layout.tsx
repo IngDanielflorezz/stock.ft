@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Package, Boxes, ArrowRightLeft, LayoutDashboard } from "lucide-react";
+import { Package, ArrowRightLeft, LayoutDashboard } from "lucide-react";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
